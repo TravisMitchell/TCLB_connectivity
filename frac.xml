@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/" permissive="true">
+	<ArbitraryLattice file="frac.cxn">
+		<MRT group="Interior"/>
+		<Wall group="Wall"/>
+	</ArbitraryLattice>
+	<Model>
+		<Param name="ForceY" value="0.0001"/>
+		<Param name="Viscosity" value="0.02"/>
+	</Model>
+	<VTK Iterations="100"/>
+	<Solve Iterations="1000"/>
+</CLBConfig>

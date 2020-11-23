@@ -1,4 +1,5 @@
 ## This script generates the connectivity for the karman_arb.xml example
+source("R/lib.R")
 
 d2q9 = matrix(c(
   0,  1,  0, -1,  0,  1, -1, -1,  1,
@@ -46,4 +47,4 @@ tab = data.frame(
   labels=as.factor(c("Main", "Wall", "Inlet", "Outlet"))[as.vector(A)]
 )
 
-write.connectivity(tab,U,"connectivity.cxn")
+write.connectivity(tab,U,"karman.cxn")

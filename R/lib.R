@@ -32,7 +32,9 @@ write.connectivity = function(x, U, filename) {
   cat("OFFSET_DIRECTIONS\n",file=f,sep="")
   cat(paste0("[",U[,1],",",U[,2],",",U[,3],"]",collapse=","),"\n",file=f,sep="")
   cat("NODES\n",file=f,sep="")
+  options(scipen=10)
   write.table(tab, file=f, row.names = FALSE, col.names=FALSE,quote = FALSE)
+  options(scipen=0)
   close(f)
 }
 
