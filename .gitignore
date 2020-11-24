@@ -42,3 +42,5 @@ vignettes/*.pdf
 /*.cxn
 output/
 *~
+CPP/*.o
+CPP/main
