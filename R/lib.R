@@ -24,7 +24,11 @@ write.connectivity = function(x, U, filename) {
   if (! all(x[,C] < nrow(x))) stop("Elements of connectivity out of range")
   if (! all(x[,C] >= 0)) stop("Elements of connectivity out of range")
   tab = cbind(1:nrow(x)-1, x$x, x$y, x$z, x[,C],nlab,lab)
-  f = file(filename,open="w")
+  if (grepl("[.]gz$",filename)) {
+    f = gzfile(filename,open="w")
+  } else {
+    f = file(filename,open="w")
+  }
   cat("LATTICESIZE ",nrow(tab),"\n",file=f,sep="")
   cat("BASE_LATTICE_DIM ",paste(apply( x[,c("x","y","z")], 2, function(x)max(x)-min(x)+1),collapse=" "),"\n",file=f,sep="")
   cat("d ", sum(apply(U,2,function(x) any(x!=0))),"\n",file=f,sep="")

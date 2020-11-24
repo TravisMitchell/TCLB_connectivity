@@ -86,4 +86,4 @@ for (i in paste0("c",1:nrow(U))) {
   tab[sel,i] = tab$idx[sel]
 }
 
-write.connectivity(tab, U, "frac.cxn")
+write.connectivity(tab, U, "frac.cxn.gz")

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/" permissive="true">
-	<ArbitraryLattice file="frac.cxn">
+	<ArbitraryLattice file="frac1.cxn" cellData="frac1.cell">
 		<MRT group="Interior"/>
 		<Wall group="Wall"/>
 	</ArbitraryLattice>
