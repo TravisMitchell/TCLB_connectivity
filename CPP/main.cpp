@@ -26,6 +26,7 @@ id_map_t point_map;
 struct element {
     point p;
     bool interior;
+    bool vtu_export;
     std::array<size_t, 27> con;
     std::array<size_t, 8> cell;
 };
@@ -52,13 +53,21 @@ void pb_tick(const size_t i,const size_t n) {
 
 
 int main() {
-    
-    unsigned int Lx=512, Ly=512, Lz=512;
-    unsigned int error;
 
+    // Selection
+    unsigned int dx=40, dy=40, dz=40, nx=400, ny=400, nz=400; // Export only a cropped window
+    bool exportInteriorOnly = true; // Export only the interior cells
+    bool writeText = false; // Write text file with zero and ones
+    unsigned int Lx=512, Ly=512, Lz=512; // Total size
+    
+    
+    unsigned int error;
     char filename[1024];
     size_t count = 0;
+    FILE* f = NULL;
+    
     printf("Generating interior:\n");
+    if (writeText) f = fopen("frac1.txt","w");
     for (int z = 0; z<Lz; z++) {
     //int z=0; {
         //printf("File: %d\n",z);
@@ -76,6 +85,7 @@ int main() {
         for (int y=0; y<Ly; y++) {
             for (int x=0; x<Lx; x++) {
                 if (image[1+4*(x+width*y)] < 128) {
+                    if (writeText) fprintf(f,"0 ");
                     point p;
                     p.x=x;
                     p.y=y;
@@ -91,11 +101,15 @@ int main() {
                         lattice.push_back(el);
                     }
                     count++;
-                }
+                } else {
+                    if (writeText) fprintf(f,"1 ");
+                }                
             }
+            if (writeText) fprintf(f,"\n");
         }
         pb_tick(z+1,Lz);
     }
+    if (writeText) fclose(f);
     printf("Generating connections:\n");
     for (size_t i=0; i<lattice.size(); i++) {
         point p = lattice[i].p;
@@ -126,32 +140,39 @@ int main() {
                 }
             }
         }      
+        lattice[i].vtu_export =
+            (dx <= p.x) && (dx+nx > p.x) &&
+            (dy <= p.y) && (dy+ny > p.y) &&
+            (dz <= p.z) && (dz+nz > p.z) &&
+            (lattice[i].interior || (!exportInteriorOnly));
         k=0;
-        for (int z=0; z<=1; z++) {
-            for (int y=0; y<=1; y++) {
-                for (int x=0; x<=1; x++) {
-                    point np;
-                    size_t id;
-                    np.x = p.x + x;
-                    np.y = p.y + y;
-                    np.z = p.z + z;
-                    id_map_t::iterator it = point_map.find(np);
-                    if (it != point_map.end()) {
-                        id = it->second;
-                    } else {
-                        id = points.size();
-                        point_map[np] = id;
-                        points.push_back(np);
+        if (lattice[i].vtu_export) {
+            for (int z=0; z<=1; z++) {
+                for (int y=0; y<=1; y++) {
+                    for (int x=0; x<=1; x++) {
+                        point np;
+                        size_t id;
+                        np.x = p.x + x;
+                        np.y = p.y + y;
+                        np.z = p.z + z;
+                        id_map_t::iterator it = point_map.find(np);
+                        if (it != point_map.end()) {
+                            id = it->second;
+                        } else {
+                            id = points.size();
+                            point_map[np] = id;
+                            points.push_back(np);
+                        }
+                        lattice[i].cell[k] = id;
+                        k++;
                     }
-                    lattice[i].cell[k] = id;
-                    k++;
                 }
             }
-        }          
+        }
         pb_tick(i+1,lattice.size());
     }
     printf("Writing connectivity:\n");
-    FILE* f = fopen("frac1.cxn","w");
+    f = fopen("frac1.cxn","w");
     fprintf(f,"LATTICESIZE %lu\n",lattice.size());
     fprintf(f,"BASE_LATTICE_DIM %d %d %d\n",20,20,20); // this is a mockup
     fprintf(f,"d 3\n");
@@ -173,18 +194,26 @@ int main() {
         fprintf(f,"%lu %lg %lg %lg", i, 0.5+lattice[i].p.x, 0.5+lattice[i].p.y, 0.5+lattice[i].p.z);
         for (int k=0; k<27; k++) fprintf(f," %lu", lattice[i].con[k]);
         char* label = "NA";
-        if (lattice[i].interior)
+        if (lattice[i].interior) {
             label = "Interior";
-        else
+        } else {
             label = "Wall";
-        fprintf(f," %d %s\n", 1, label);
+        }
+        if (lattice[i].vtu_export) {
+            fprintf(f," 1 %s\n", label);
+        } else {
+            fprintf(f," 2 %s %s\n", label, "HIDE");
+        }
         pb_tick(i+1,lattice.size());
     }
     fclose(f);
     printf("Writing points:\n");
     f = fopen("frac1.cell","w");
     fprintf(f,"N_POINTS %lu\n",points.size());
-    fprintf(f,"N_CELLS %lu\n",lattice.size());
+    size_t cells = 0;
+    for (size_t i=0; i<lattice.size(); i++) if (lattice[i].vtu_export) cells++;
+    
+    fprintf(f,"N_CELLS %lu\n",cells);
     fprintf(f,"POINTS\n");
     for (size_t i=0; i<points.size(); i++) {
         fprintf(f,"%lg %lg %lg\n", (double) points[i].x, (double) points[i].y, (double) points[i].z);
@@ -192,7 +221,7 @@ int main() {
     }
     fprintf(f,"CELLS\n");
     printf("Writing cells:\n");
-    for (size_t i=0; i<lattice.size(); i++) {
+    for (size_t i=0; i<lattice.size(); i++) if (lattice[i].vtu_export) {
         fprintf(f,"%lu %lu %lu %lu %lu %lu %lu %lu\n",
             lattice[i].cell[0],
             lattice[i].cell[1],
