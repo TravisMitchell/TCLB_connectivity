@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/" permissive="true">
-	<ArbitraryLattice file="frac1.cxn" cellData="frac1.cell">
-		<MRT group="Interior"/>
-		<Wall group="Wall"/>
-	</ArbitraryLattice>
+	<Geometry nx="512" ny="512" nz="512">
+		<MRT><Box/></MRT>
+		<Wall mask="ALL">
+			<Text file="frac1.txt" nx="512" ny="512" nz="512" order="zyx"/>
+		</Wall>
+	</Geometry>
 	<Model>
 		<Param name="ForceX" value="0.0001"/>
 		<Param name="nu" value="0.02"/>
