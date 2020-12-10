@@ -50,7 +50,7 @@ void pb_tick(const size_t i,const size_t n) {
         fflush(stdout);
         pb_now = now;
     }
-    if (i == n) printf("]\n");
+    if (i == n) printf("\n");
 }
 
 
@@ -307,6 +307,7 @@ int main() {
     }
     fprintf(f,"CELLS\n");
     printf("Writing cells:\n");
+    size_t k=0;
     for (size_t i=0; i<lattice.size(); i++) if (lattice[i].vtu_export) {
         fprintf(f,"%lu %lu %lu %lu %lu %lu %lu %lu\n",
             lattice[i].cell[0],
@@ -317,7 +318,8 @@ int main() {
             lattice[i].cell[5],
             lattice[i].cell[7],
             lattice[i].cell[6]);
-        pb_tick(i+1,lattice.size());
+        pb_tick(k+1,cells);
+        k++;
     }
     fclose(f);
     return 0;
