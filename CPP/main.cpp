@@ -57,11 +57,12 @@ void pb_tick(const size_t i,const size_t n) {
 int main() {
 
     // Selection
-    unsigned int dx=40, dy=40, dz=40, nx=400, ny=400, nz=400; // Export only a cropped window
+    unsigned int dx=0, dy=0, dz=0, nx=200, ny=200, nz=200; // Export only a cropped window
     bool exportInteriorOnly = true; // Export only the interior cells
     bool writeText = false; // Write text file with zero and ones
-    unsigned int Lx=512, Ly=512, Lz=512; // Total size
-    size_t comp_sel = 1; // Number of components (from first) to export. Set to 0 for ALL    
+    unsigned int Lx=200, Ly=200, Lz=200; // Total size
+    bool comp_sel_biggest = true; // If to select n biggest or n first components
+    size_t comp_sel = 10; // Number of components to export. Set to 0 for ALL    
     
     unsigned int error;
     char filename[1024];
@@ -162,17 +163,41 @@ int main() {
         comp_size.push_back(n);
     }
     printf("Connected components: %ld\n", component);
-    printf("Sizes of first <30 components:");
-    for (int i=0; i<30; i++) if (i<comp_size.size()) printf(" %ld", comp_size[i]);
-    printf("\n");
 
     if (comp_sel > 0) {
-        printf("Selecting subset:\n");
-        printf("Only components: %d-%d\n",1,comp_sel);
-        std::vector<size_t> reindex;
+        std::vector< size_t > comp_max;
+        if (comp_sel_biggest) {
+            printf("Selecting %d biggest components:\n",comp_sel);
+            for (size_t i=0; i<comp_size.size(); i++) {
+                size_t k1 = i;
+                for (size_t j=0; j < comp_max.size(); j++) {
+                    size_t k2 = comp_max[j]; 
+                    if (comp_size[k1] > comp_size[k2]) {
+                        comp_max[j] = k1;
+                        k1 = k2;
+                    }
+                }
+                if (comp_max.size() < comp_sel) comp_max.push_back(k1);
+            }
+        } else {
+            printf("Selecting first %d components:\n");
+            for (size_t i=0; i<comp_size.size(); i++) {
+                if (comp_max.size() < comp_sel) comp_max.push_back(i);
+            }
+        }   
+        std::vector< bool > comp_selected( comp_size.size(), false);
+        size_t tot_size = 0;
+        for (size_t j=0; j < comp_max.size(); j++) {
+            size_t k = comp_max[j];
+            printf("    %ld - size: %ld\n", k, comp_size[k]);
+            comp_selected[k] = true;
+            tot_size  = tot_size + comp_size[k];
+        }
+        printf("    total selected: %ld\n", tot_size);
+        
         size_t shift = 0;
         for (size_t j=0; j<lattice.size(); j++) {
-            if (lattice[j].component <= comp_sel) {
+            if (comp_selected[lattice[j].component - 1]) {
                 if (shift > 0) {
                     lattice[j - shift] = lattice[j];
                 }
@@ -180,8 +205,8 @@ int main() {
                 shift++;
             }
         }
-        printf("Max shift: %ld\n", shift);
         lattice.resize(lattice.size() - shift);
+        printf("Lattice after selection: %ld\n", lattice.size());
         printf("Regenerating map:\n");
         id_map.clear();
         for (size_t i=0; i<lattice.size(); i++) {
