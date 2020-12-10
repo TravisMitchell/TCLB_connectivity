@@ -4,7 +4,7 @@ library(rfracture)
 
 power.spectrum = function(f) 0.0001/(f^3.5)
 
-ret = fracture_matrix(dims = c(200,200,200),power.iso=power.spectrum)
+ret = fracture_matrix(dims = c(128,128,128),power.iso=power.spectrum)
 
 mat = ret$f1<0.05
 
