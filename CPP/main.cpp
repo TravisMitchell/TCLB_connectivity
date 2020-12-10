@@ -2,6 +2,7 @@
 #include "lodepng.h"
 #include <vector>
 #include <string>
+#include <queue>
 #include <map>
 #include <math.h>
 
@@ -29,6 +30,7 @@ struct element {
     bool vtu_export;
     std::array<size_t, 27> con;
     std::array<size_t, 8> cell;
+    size_t component;
 };
 
 std::vector<element> lattice;
@@ -59,7 +61,7 @@ int main() {
     bool exportInteriorOnly = true; // Export only the interior cells
     bool writeText = false; // Write text file with zero and ones
     unsigned int Lx=512, Ly=512, Lz=512; // Total size
-    
+    size_t comp_sel = 1; // Number of components (from first) to export. Set to 0 for ALL    
     
     unsigned int error;
     char filename[1024];
@@ -92,14 +94,9 @@ int main() {
                     p.z=z;
                     element el;
                     el.interior = true;
+                    el.component = 0;
                     el.p = p;
-                    if (id_map.find(el.p) != id_map.end()) {
-                        fprintf(stderr, "Element in the map\n");
-                        return -1;
-                    } else {
-                        id_map[el.p] = lattice.size();
-                        lattice.push_back(el);
-                    }
+                    lattice.push_back(el);
                     count++;
                 } else {
                     if (writeText) fprintf(f,"1 ");
@@ -109,6 +106,95 @@ int main() {
         }
         pb_tick(z+1,Lz);
     }
+
+    printf("Generating map:\n");
+    for (size_t i=0; i<lattice.size(); i++) {
+        point p = lattice[i].p;
+        if (id_map.find(p) != id_map.end()) {
+            fprintf(stderr, "Element in the map\n");
+            return -1;
+        }
+        id_map[p] = i;
+        pb_tick(i+1,lattice.size());
+    }
+    
+    size_t component = 0;
+    std::queue< size_t > Q;
+    std::vector< size_t > comp_size;
+    printf("Generating components:\n");
+    size_t marked = 0;
+    for (size_t j=0; j<lattice.size(); j++) if (lattice[j].component == 0) {
+        component++;
+        size_t n = 0;
+        lattice[j].component = component;
+        marked++; n++;
+        Q.push(j);
+        while (! Q.empty()) {
+            size_t i = Q.front();
+            point p = lattice[i].p;
+            int k=0;
+            for (int z=-1; z<=1; z++) {
+                for (int y=-1; y<=1; y++) {
+                    for (int x=-1; x<=1; x++) {
+                        point np;
+                        np.x = (p.x + x + Lx) % Lx;
+                        np.y = (p.y + y + Ly) % Ly;
+                        np.z = (p.z + z + Lz) % Lz;
+                        id_map_t::iterator it = id_map.find(np);
+                        if (it != id_map.end()) {
+                            size_t k = it->second;
+                            size_t ncom = lattice[k].component;
+                            if (ncom == 0) {
+                                lattice[k].component = component;
+                                marked++; n++;
+                                Q.push(k);                                
+                            } else if (ncom != component) {
+                                printf("Error. this should not happen.\n");
+                                exit(-1);
+                            }
+                        }
+                    }
+                }
+            }
+            Q.pop();
+            pb_tick(marked,lattice.size());
+        }
+        comp_size.push_back(n);
+    }
+    printf("Connected components: %ld\n", component);
+    printf("Sizes of first <30 components:");
+    for (int i=0; i<30; i++) if (i<comp_size.size()) printf(" %ld", comp_size[i]);
+    printf("\n");
+
+    if (comp_sel > 0) {
+        printf("Selecting subset:\n");
+        printf("Only components: %d-%d\n",1,comp_sel);
+        std::vector<size_t> reindex;
+        size_t shift = 0;
+        for (size_t j=0; j<lattice.size(); j++) {
+            if (lattice[j].component <= comp_sel) {
+                if (shift > 0) {
+                    lattice[j - shift] = lattice[j];
+                }
+            } else {
+                shift++;
+            }
+        }
+        printf("Max shift: %ld\n", shift);
+        lattice.resize(lattice.size() - shift);
+        printf("Regenerating map:\n");
+        id_map.clear();
+        for (size_t i=0; i<lattice.size(); i++) {
+            point p = lattice[i].p;
+            if (id_map.find(p) != id_map.end()) {
+                fprintf(stderr, "Element in the map\n");
+                return -1;
+            }
+            id_map[p] = i;
+            pb_tick(i+1,lattice.size());
+        }
+    }
+    
     if (writeText) fclose(f);
     printf("Generating connections:\n");
     for (size_t i=0; i<lattice.size(); i++) {
