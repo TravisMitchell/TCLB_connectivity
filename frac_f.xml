@@ -1,15 +1,16 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/" permissive="true">
-	<Geometry nx="512" ny="512" nz="512">
+	<Geometry nx="128" ny="128" nz="128">
 		<MRT><Box/></MRT>
 		<Wall mask="ALL">
-			<Text file="frac1.txt" nx="512" ny="512" nz="512" order="zyx"/>
+			<Text file="frac1.txt" nx="128" ny="128" nz="128" order="zyx"/>
 		</Wall>
 	</Geometry>
 	<Model>
 		<Param name="ForceX" value="0.0001"/>
 		<Param name="nu" value="0.02"/>
 	</Model>
-	<VTK Iterations="1000"/>
-	<Solve Iterations="3000"/>
+	<Log Iterations="10"/>
+	<VTK Iterations="100"/>
+	<Solve Iterations="100"/>
 </CLBConfig>

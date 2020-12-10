@@ -4,6 +4,7 @@
 #include <string>
 #include <queue>
 #include <map>
+#include <set>
 #include <math.h>
 
 struct point {
@@ -59,10 +60,10 @@ int main() {
     // Selection
     unsigned int dx=0, dy=0, dz=0, nx=200, ny=200, nz=200; // Export only a cropped window
     bool exportInteriorOnly = true; // Export only the interior cells
-    bool writeText = false; // Write text file with zero and ones
-    unsigned int Lx=200, Ly=200, Lz=200; // Total size
+    bool writeText = true; // Write text file with zero and ones
+    unsigned int Lx=128, Ly=128, Lz=128; // Total size
     bool comp_sel_biggest = true; // If to select n biggest or n first components
-    size_t comp_sel = 10; // Number of components to export. Set to 0 for ALL    
+    size_t comp_sel = 3; // Number of components to export. Set to 0 for ALL    
     
     unsigned int error;
     char filename[1024];
@@ -70,11 +71,10 @@ int main() {
     FILE* f = NULL;
     
     printf("Generating interior:\n");
-    if (writeText) f = fopen("frac1.txt","w");
-    for (int z = 0; z<Lz; z++) {
+    for (long int z = 0; z<Lz; z++) {
     //int z=0; {
         //printf("File: %d\n",z);
-        sprintf(filename,"cut_%04d.png",z+1);
+        sprintf(filename,"cut_%04ld.png",z+1);
         unsigned int width, height;
         std::vector<unsigned char> image;
         error = lodepng::decode(image, width, height, filename);
@@ -85,10 +85,9 @@ int main() {
             fprintf(stderr, "Wrong dimensions of %s\n", filename);
             return -1;
         }
-        for (int y=0; y<Ly; y++) {
-            for (int x=0; x<Lx; x++) {
+        for (long int y=0; y<Ly; y++) {
+            for (long int x=0; x<Lx; x++) {
                 if (image[1+4*(x+width*y)] < 128) {
-                    if (writeText) fprintf(f,"0 ");
                     point p;
                     p.x=x;
                     p.y=y;
@@ -100,10 +99,8 @@ int main() {
                     lattice.push_back(el);
                     count++;
                 } else {
-                    if (writeText) fprintf(f,"1 ");
                 }                
             }
-            if (writeText) fprintf(f,"\n");
         }
         pb_tick(z+1,Lz);
     }
@@ -167,7 +164,7 @@ int main() {
     if (comp_sel > 0) {
         std::vector< size_t > comp_max;
         if (comp_sel_biggest) {
-            printf("Selecting %d biggest components:\n",comp_sel);
+            printf("Selecting %ld biggest components:\n",comp_sel);
             for (size_t i=0; i<comp_size.size(); i++) {
                 size_t k1 = i;
                 for (size_t j=0; j < comp_max.size(); j++) {
@@ -180,7 +177,7 @@ int main() {
                 if (comp_max.size() < comp_sel) comp_max.push_back(k1);
             }
         } else {
-            printf("Selecting first %d components:\n");
+            printf("Selecting first %ld components:\n",comp_sel);
             for (size_t i=0; i<comp_size.size(); i++) {
                 if (comp_max.size() < comp_sel) comp_max.push_back(i);
             }
@@ -220,7 +217,35 @@ int main() {
         }
     }
     
-    if (writeText) fclose(f);
+    if (writeText) {
+        f = fopen("frac1.txt","w");
+        printf("Constructing lattice set structure:\n");
+        std::map< long int, std::map< long int, std::set< long int > > > latset;
+        for (size_t i=0; i<lattice.size(); i++) {
+            point p = lattice[i].p;
+            latset[p.z][p.y].insert(p.x);
+            pb_tick(i+1,lattice.size());
+        }
+        printf("Writing Text 0-1 file:\n");
+        for (long int z = 0; z<Lz; z++) {
+            std::map< long int, std::set< long int > > & latset_z = latset[z];
+            for (long int y=0; y<Ly; y++) {
+                std::set< long int > & latset_y = latset_z[y];
+                for (long int x=0; x<Lx; x++) {
+                    if (latset_y.count(x) > 0) {
+                        fprintf(f,"1 ");
+                    } else {
+                        fprintf(f,"1 ");
+                    }
+                }
+                fprintf(f,"\n");
+            }
+            pb_tick(z+1,Lz);
+        }
+        fclose(f);
+    }
+
+    
     printf("Generating connections:\n");
     for (size_t i=0; i<lattice.size(); i++) {
         point p = lattice[i].p;

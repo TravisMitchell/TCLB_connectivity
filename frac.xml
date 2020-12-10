@@ -8,6 +8,7 @@
 		<Param name="ForceX" value="0.0001"/>
 		<Param name="nu" value="0.02"/>
 	</Model>
-	<VTK Iterations="1000"/>
-	<Solve Iterations="3000"/>
+	<Log Iterations="10"/>
+	<VTK Iterations="100"/>
+	<Solve Iterations="100"/>
 </CLBConfig>
