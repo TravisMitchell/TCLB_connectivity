@@ -12,5 +12,5 @@
 	</Model>
 	<Log Iterations="10"/>
 	<VTK Iterations="100"/>
-	<Solve Iterations="100"/>
+	<Solve Iterations="1000"/>
 </CLBConfig>

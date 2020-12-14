@@ -63,7 +63,7 @@ int main() {
     bool writeText = true; // Write text file with zero and ones
     unsigned int Lx=128, Ly=128, Lz=128; // Total size
     bool comp_sel_biggest = true; // If to select n biggest or n first components
-    size_t comp_sel = 3; // Number of components to export. Set to 0 for ALL    
+    size_t comp_sel = 1; // Number of components to export. Set to 0 for ALL    
     
     unsigned int error;
     char filename[1024];
@@ -233,7 +233,7 @@ int main() {
                 std::set< long int > & latset_y = latset_z[y];
                 for (long int x=0; x<Lx; x++) {
                     if (latset_y.count(x) > 0) {
-                        fprintf(f,"1 ");
+                        fprintf(f,"0 ");
                     } else {
                         fprintf(f,"1 ");
                     }
