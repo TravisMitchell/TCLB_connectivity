@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "lodepng.h"
 #include <vector>
 #include <string>
@@ -6,6 +7,7 @@
 #include <map>
 #include <set>
 #include <math.h>
+#include <string.h>
 
 struct point {
     long int x,y,z;
@@ -55,16 +57,44 @@ void pb_tick(const size_t i,const size_t n) {
 }
 
 
-int main() {
+int main( int argc, char *argv[]  ) {
+    char* datFile;
+    char* cxnFile; 
+    char* celFile;
+    char* direct;
+    int dx, dy, dz, nx, ny, nz;
+    int Lx, Ly, Lz;
 
-    // Selection
-    unsigned int dx=0, dy=0, dz=0, nx=200, ny=200, nz=200; // Export only a cropped window
+    if (argc > 1) {
+	datFile = argv[1];
+        cxnFile = argv[2];
+        celFile = argv[3];
+        direct  = argv[4];
+
+	Lx = atoi (argv[5]);
+	Ly = atoi (argv[6]);
+	Lz = atoi (argv[7]);      // Total size
+        
+	int myMax = std::max(Lx, Ly);
+	myMax = std::max(myMax, Lz);
+	dx=0; dy=0; dz=0; nx=myMax; ny=myMax; nz=myMax; // Exporting everything in this case
+    } else {	 
+        datFile = "Rock2ab_low_res_pores_v1z.txt";
+        cxnFile = "Rock2ab_low_res_pores_v1z.cxn";
+        celFile = "Rock2ab_low_res_pores_v1z.cell";
+        direct  = "/media/uqtmitc3/DATA/Documents/Modelling_TCLB/BHP_Permeability/imageBinarisation/Rock2ab_low_res_pores_v1z/modifiedImage_%05ld.png";
+
+        //unsigned int dx=0, dy=0, dz=0, nx=480, ny=480, nz=512; // Export only a cropped window
+        //unsigned int Lx=479, Ly=479, Lz=511; // Total size
+        dx=0; dy=0; dz=0; nx=480; ny=480; nz=512; // Export only a cropped window
+        Lx=479; Ly=479; Lz=511; // Total size
+    }
+    
     bool exportInteriorOnly = true; // Export only the interior cells
     bool writeText = true; // Write text file with zero and ones
-    unsigned int Lx=128, Ly=128, Lz=128; // Total size
     bool comp_sel_biggest = true; // If to select n biggest or n first components
-    size_t comp_sel = 1; // Number of components to export. Set to 0 for ALL    
-    
+    size_t comp_sel = 0; // Number of components to export. Set to 0 for ALL    
+
     unsigned int error;
     char filename[1024];
     size_t count = 0;
@@ -74,7 +104,7 @@ int main() {
     for (long int z = 0; z<Lz; z++) {
     //int z=0; {
         //printf("File: %d\n",z);
-        sprintf(filename,"cut_%04ld.png",z+1);
+        sprintf(filename, direct, z+1);
         unsigned int width, height;
         std::vector<unsigned char> image;
         error = lodepng::decode(image, width, height, filename);
@@ -218,7 +248,7 @@ int main() {
     }
     
     if (writeText) {
-        f = fopen("frac1.txt","w");
+        f = fopen(datFile,"w");
         printf("Constructing lattice set structure:\n");
         std::map< long int, std::map< long int, std::set< long int > > > latset;
         for (size_t i=0; i<lattice.size(); i++) {
@@ -308,7 +338,7 @@ int main() {
         pb_tick(i+1,lattice.size());
     }
     printf("Writing connectivity:\n");
-    f = fopen("frac1.cxn","w");
+    f = fopen(cxnFile,"w");
     fprintf(f,"LATTICESIZE %lu\n",lattice.size());
     fprintf(f,"BASE_LATTICE_DIM %d %d %d\n",20,20,20); // this is a mockup
     fprintf(f,"d 3\n");
@@ -344,7 +374,7 @@ int main() {
     }
     fclose(f);
     printf("Writing points:\n");
-    f = fopen("frac1.cell","w");
+    f = fopen(celFile,"w");
     fprintf(f,"N_POINTS %lu\n",points.size());
     size_t cells = 0;
     for (size_t i=0; i<lattice.size(); i++) if (lattice[i].vtu_export) cells++;
