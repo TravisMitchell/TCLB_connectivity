@@ -66,18 +66,18 @@ int main( int argc, char *argv[]  ) {
     int Lx, Ly, Lz;
 
     if (argc > 1) {
-	datFile = argv[1];
+    	datFile = argv[1];
         cxnFile = argv[2];
         celFile = argv[3];
         direct  = argv[4];
 
-	Lx = atoi (argv[5]);
-	Ly = atoi (argv[6]);
-	Lz = atoi (argv[7]);      // Total size
-        
-	int myMax = std::max(Lx, Ly);
-	myMax = std::max(myMax, Lz);
-	dx=0; dy=0; dz=0; nx=myMax; ny=myMax; nz=myMax; // Exporting everything in this case
+	    Lx = atoi (argv[5]);
+        Ly = atoi (argv[6]);
+        Lz = atoi (argv[7]);      // Total size
+            
+        int myMax = std::max(Lx, Ly);
+        myMax = std::max(myMax, Lz);
+        dx=0; dy=0; dz=0; nx=myMax; ny=myMax; nz=myMax; // Exporting everything in this case
     } else {	 
         datFile = "Rock2ab_low_res_pores_v1z.txt";
         cxnFile = "Rock2ab_low_res_pores_v1z.cxn";
@@ -94,6 +94,17 @@ int main( int argc, char *argv[]  ) {
     bool writeText = true; // Write text file with zero and ones
     bool comp_sel_biggest = true; // If to select n biggest or n first components
     size_t comp_sel = 0; // Number of components to export. Set to 0 for ALL    
+
+    if (argc > 10) {
+        dx=atoi( argv[8] ); 
+        dy=atoi( argv[9] ); 
+        dz=atoi( argv[10] ); 
+        nx=atoi( argv[11] ); 
+        ny=atoi( argv[12] ); 
+        nz=atoi( argv[13] ); 
+
+        comp_sel = atoi( argv[14] );
+    }
 
     unsigned int error;
     char filename[1024];
@@ -256,7 +267,7 @@ int main( int argc, char *argv[]  ) {
             latset[p.z][p.y].insert(p.x);
             pb_tick(i+1,lattice.size());
         }
-        printf("Writing Text 0-1 file:\n");
+        printf("Writing Text 0-1 file (%d,%d,%d):\n",Lx,Ly,Lz);
         for (long int z = 0; z<Lz; z++) {
             std::map< long int, std::set< long int > > & latset_z = latset[z];
             for (long int y=0; y<Ly; y++) {
