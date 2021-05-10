@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     FILE* f = NULL;
 
     // * Parse my inputs:
-    if (argc != 15){
+    if (argc != 16){
         printf("input format required is: {files reg string}, {Lx}, {Ly}, {Lz},\n {dx}, {dy}, {dz},\n {nx}, {ny}, {nz},\n {interior}, {normGrid}, {biggest elements}, {number of elements}\n");
     }
         char* fileRegExp = argv[1];
@@ -82,6 +82,7 @@ int main(int argc, char** argv) {
         writeText = atoi(argv[12]);
         comp_sel_biggest = atoi(argv[13]);
         comp_sel = atoi(argv[14]);
+        char* outstring = argv[15];
 
     printf("Generating interior:\n");
     for (long int z = 0; z<Lz; z++) {
@@ -229,7 +230,10 @@ int main(int argc, char** argv) {
     }
     
     if (writeText) {
-        f = fopen("frac1.txt","w");
+        char* txtString = (char*) malloc(strlen(outstring) + 4 + 1);
+        strcpy( txtString, outstring);
+        strcat( txtString, ".txt");
+        f = fopen(txtString,"w");
         printf("Constructing lattice set structure:\n");
         std::map< long int, std::map< long int, std::set< long int > > > latset;
         for (size_t i=0; i<lattice.size(); i++) {
@@ -319,7 +323,10 @@ int main(int argc, char** argv) {
         pb_tick(i+1,lattice.size());
     }
     printf("Writing connectivity:\n");
-    f = fopen("frac1.cxn","w");
+    char* cxnString = (char*) malloc(strlen(outstring) + 4 + 1);
+    strcpy( cxnString, outstring);
+    strcat( cxnString, ".cxn");
+    f = fopen(cxnString,"w");
     fprintf(f,"LATTICESIZE %lu\n",lattice.size());
     fprintf(f,"BASE_LATTICE_DIM %d %d %d\n",20,20,20); // this is a mockup
     fprintf(f,"d 3\n");
@@ -355,7 +362,10 @@ int main(int argc, char** argv) {
     }
     fclose(f);
     printf("Writing points:\n");
-    f = fopen("frac1.cell","w");
+    char* cellString = (char*) malloc(strlen(outstring) + 4 + 1);
+    strcpy( cellString, outstring);
+    strcat( cellString, ".cell");
+    f = fopen(cellString,"w");
     fprintf(f,"N_POINTS %lu\n",points.size());
     size_t cells = 0;
     for (size_t i=0; i<lattice.size(); i++) if (lattice[i].vtu_export) cells++;
