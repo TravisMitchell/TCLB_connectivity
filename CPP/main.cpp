@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <cstdlib>
 #include "lodepng.h"
 #include <vector>
 #include <string>
@@ -55,26 +56,36 @@ void pb_tick(const size_t i,const size_t n) {
 }
 
 
-int main() {
+int main(int argc, char** argv) {
+    // * Set up params in memory
+    unsigned int Lx, Ly, Lz; // ! Total Size
+    unsigned int dx, dy, dz; // ! Export cropped domain start
+    unsigned int nx, ny, nz; // ! Export cropped domain length
 
-    // Selection
-    unsigned int dx=0, dy=0, dz=0, nx=200, ny=200, nz=200; // Export only a cropped window
-    bool exportInteriorOnly = true; // Export only the interior cells
-    bool writeText = true; // Write text file with zero and ones
-    unsigned int Lx=128, Ly=128, Lz=128; // Total size
-    bool comp_sel_biggest = true; // If to select n biggest or n first components
-    size_t comp_sel = 1; // Number of components to export. Set to 0 for ALL    
+    bool exportInteriorOnly, writeText, comp_sel_biggest; // ! write interior, write for normal TCLB, export biggest components only
+    size_t comp_sel; // ! Number of components to export. Set to 0 for ALL    
     
     unsigned int error;
     char filename[1024];
     size_t count = 0;
     FILE* f = NULL;
-    
+
+    // * Parse my inputs:
+    if (argc != 15){
+        printf("input format required is: {files reg string}, {Lx}, {Ly}, {Lz},\n {dx}, {dy}, {dz},\n {nx}, {ny}, {nz},\n {interior}, {normGrid}, {biggest elements}, {number of elements}\n");
+    }
+        char* fileRegExp = argv[1];
+        Lx=atoi(argv[2]); Ly=atoi(argv[3]); Lz=atoi(argv[4]);
+        dx=atoi(argv[5]); dy=atoi(argv[6]); dz=atoi(argv[7]);
+        nx=atoi(argv[8]); ny=atoi(argv[9]); nz=atoi(argv[10]);
+        exportInteriorOnly = atoi(argv[11]);
+        writeText = atoi(argv[12]);
+        comp_sel_biggest = atoi(argv[13]);
+        comp_sel = atoi(argv[14]);
+
     printf("Generating interior:\n");
     for (long int z = 0; z<Lz; z++) {
-    //int z=0; {
-        //printf("File: %d\n",z);
-        sprintf(filename,"cut_%04ld.png",z+1);
+        sprintf(filename,fileRegExp,z+1);
         unsigned int width, height;
         std::vector<unsigned char> image;
         error = lodepng::decode(image, width, height, filename);
